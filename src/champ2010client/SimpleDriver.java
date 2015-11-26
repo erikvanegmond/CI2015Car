@@ -1,5 +1,8 @@
 package champ2010client;
 
+import java.io.*;
+import java.util.Arrays;
+
 public class SimpleDriver extends Controller{
 	
 	/* Gear Changing Constants*/
@@ -11,8 +14,8 @@ public class SimpleDriver extends Controller{
 	final float  stuckAngle = (float) 0.523598775; //PI/6
 
 	/* Accel and Brake Constants*/
-	final float maxSpeedDist=70;
-	final float maxSpeed=150;
+	final float maxSpeedDist=110;
+	final float maxSpeed=250;
 	final float sin5 = (float) 0.08716;
 	final float cos5 = (float) 0.99619;
 
@@ -41,18 +44,35 @@ public class SimpleDriver extends Controller{
 
 	// current clutch
 	private float clutch=0;
-	
+
+	private Writer output;
+	private Writer input;
+
+	public SimpleDriver(){
+		System.out.println("driver started");
+		try {
+			output = new BufferedWriter(new FileWriter("output.txt", true));
+			input = new BufferedWriter(new FileWriter("input.txt", true));
+		}catch ( IOException e){
+
+		}
+
+	}
+
 	public void reset() {
 		System.out.println("Restarting the race!");
 		
 	}
 
 	public void shutdown() {
+		try {
+			output.close();
+			input.close();
+		}catch (IOException e){}
 		System.out.println("Bye bye!");		
 	}
 	
-	
-	private int getGear(SensorModel sensors){
+		private int getGear(SensorModel sensors){
 	    int gear = sensors.getGear();
 	    double rpm  = sensors.getRPM();
 
@@ -135,6 +155,11 @@ public class SimpleDriver extends Controller{
 	}
 
 	public Action control(SensorModel sensors){
+//		System.out.println(sensorsToString(sensors));
+//		try {
+//			input.append(sensorsToString(sensors));
+//		}catch (IOException e){}
+//		System.out.println("hi");
 		// check if car is currently stuck
 		if ( Math.abs(sensors.getAngleToTrackAxis()) > stuckAngle )
 	    {
@@ -171,7 +196,12 @@ public class SimpleDriver extends Controller{
 	        action.accelerate = 1.0;
 	        action.brake = 0;
 	        action.clutch = clutch;
-	        return action;
+//			System.out.println(actionsToString(action));
+			try {
+				output.append(actionsToString(action));
+				input.append(sensorsToString(sensors));
+			}catch (IOException e){}
+			return action;
 	    }
 
 	    else // car is not stuck
@@ -213,7 +243,12 @@ public class SimpleDriver extends Controller{
 	        action.accelerate = accel;
 	        action.brake = brake;
 	        action.clutch = clutch;
-	        return action;
+//			System.out.println(actionsToString(action));
+			try {
+				output.append(actionsToString(action));
+				input.append(sensorsToString(sensors));
+			}catch (IOException e){}
+			return action;
 	    }
 	}
 
@@ -302,4 +337,40 @@ public class SimpleDriver extends Controller{
 		angles[9]=0;
 		return angles;
 	}
+
+	private String sensorsToString(SensorModel sensors){
+		String sensorString = "";
+		sensorString += sensors.getSpeed();
+		sensorString += ",";
+		sensorString += sensors.getAngleToTrackAxis();
+		sensorString += ",";
+		sensorString += Arrays.toString(sensors.getTrackEdgeSensors());
+		sensorString += ",";
+		sensorString += Arrays.toString(sensors.getFocusSensors());
+		sensorString += ",";
+		sensorString += sensors.getTrackPosition();
+		sensorString += ",";
+		sensorString += sensors.getGear();
+		sensorString += "\n";
+		return sensorString.replace("[", "").replaceAll("]", "");
+	}
+
+	private String actionsToString(Action action){
+		String actionString = "";
+		actionString += action.accelerate;
+		actionString += ",";
+		actionString += action.brake;
+		actionString += ",";
+		actionString += action.steering;
+		actionString += ",";
+		actionString += action.clutch;
+		actionString += ",";
+		actionString += action.focus;
+		actionString += ",";
+		actionString += action.gear;
+		actionString += "\n";
+		return actionString;
+
+	}
+
 }
