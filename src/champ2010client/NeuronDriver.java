@@ -74,7 +74,7 @@ public class NeuronDriver extends Controller{
 			outputMax[j] = Double.parseDouble(dataFeatures[j]);
 		}
 
-		loadedMlPerceptron = NeuralNetwork.createFromFile("C:\\Users\\Erik\\IdeaProjects\\Neuralnetworks\\myMlPerceptron.nnet");
+		loadedMlPerceptron = NeuralNetwork.createFromFile("C:\\Users\\Erik\\IdeaProjects\\Neuralnetworks\\fullRace.nnet");
 
 		System.out.println("driver started");
 	}
@@ -98,8 +98,8 @@ public class NeuronDriver extends Controller{
 		loadedMlPerceptron.setInput(sensorList);
 		loadedMlPerceptron.calculate();
 		double[ ] networkOutput = loadedMlPerceptron.getOutput();
-		System.out.println(Arrays.toString(networkOutput));
 		networkOutput = denormalizeOutput(networkOutput);
+		System.out.println(Arrays.toString(networkOutput));
 		return listToAction(networkOutput);
 
 	}
@@ -152,8 +152,7 @@ public class NeuronDriver extends Controller{
 		action.brake = list[1];
 		action.steering = list[2];
 		action.clutch = list[3];
-		// we don't use focus (4) in the action
-		action.gear = (int)Math.round(list[5]);
+		action.gear = (int)Math.round(list[4]);
 		return action;
 	}
 
