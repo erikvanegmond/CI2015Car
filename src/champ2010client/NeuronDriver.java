@@ -131,12 +131,9 @@ public class NeuronDriver extends Controller{
 		List<Double> list = new ArrayList<Double>();
 		list.add(sensors.getSpeed());
 		list.add(sensors.getAngleToTrackAxis());
-		for(double item: sensors.getTrackEdgeSensors()){
-			list.add(item);
-		}
-		for(double item: sensors.getFocusSensors()){
-			list.add(item);
-		}
+		list.add(sensors.getTrackEdgeSensors()[10]);
+		list.add(sensors.getTrackEdgeSensors()[9]);
+		list.add(sensors.getTrackEdgeSensors()[8]);
 		list.add(sensors.getTrackPosition());
 		list.add((Double.parseDouble((""+sensors.getGear()))));//WTF???
 

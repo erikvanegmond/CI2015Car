@@ -1,13 +1,12 @@
 package champ2010client;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Arrays;
 
-public class SimpleDriver extends Controller{
-	
-	/* Gear Changing Constants*/
-	final int[]  gearUp={5000,6000,6000,6500,7000,0};
-	final int[]  gearDown={0,2500,3000,3000,3500,3500};
+public class SimpleDriverWithoutClutch extends Controller{
 
 	/* Stuck constants*/
 	final int  stuckTime = 25;
@@ -29,26 +28,13 @@ public class SimpleDriver extends Controller{
 	final float absSlip=(float) 2.0;
 	final float absRange=(float) 3.0;
 	final float absMinSpeed=(float) 3.0;
-	
-	/* Clutching Constants */
-	final float clutchMax=(float) 0.5;
-	final float clutchDelta=(float) 0.05;
-	final float clutchRange=(float) 0.82;
-	final float	clutchDeltaTime=(float) 0.02;
-	final float clutchDeltaRaced=10;
-	final float clutchDec=(float) 0.01;
-	final float clutchMaxModifier=(float) 1.3;
-	final float clutchMaxTime=(float) 1.5;
-	
-	private int stuck=0;
 
-	// current clutch
-	private float clutch=0;
+	private int stuck=0;
 
 	private Writer output;
 	private Writer input;
 
-	public SimpleDriver(){
+	public SimpleDriverWithoutClutch(){
 		System.out.println("driver started");
 		try {
 			output = new BufferedWriter(new FileWriter("output.txt", true));
@@ -72,26 +58,6 @@ public class SimpleDriver extends Controller{
 		System.out.println("Bye bye!");		
 	}
 	
-		private int getGear(SensorModel sensors){
-	    int gear = sensors.getGear();
-	    double rpm  = sensors.getRPM();
-
-	    // if gear is 0 (N) or -1 (R) just return 1 
-	    if (gear<1)
-	        return 1;
-	    // check if the RPM value of car is greater than the one suggested 
-	    // to shift up the gear from the current one     
-	    if (gear <6 && rpm >= gearUp[gear-1])
-	        return gear + 1;
-	    else
-	    	// check if the RPM value of car is lower than the one suggested 
-	    	// to shift down the gear from the current one
-	        if (gear > 1 && rpm <= gearDown[gear-1])
-	            return gear - 1;
-	        else // otherwhise keep current gear
-	            return gear;
-	}
-
 	private float getSteer(SensorModel sensors){
 		// steering angle is compute by correcting the actual car angle w.r.t. to track 
 		// axis [sensors.getAngle()] and to adjust car position w.r.t to middle of track [sensors.getTrackPos()*0.5]
@@ -181,21 +147,19 @@ public class SimpleDriver extends Controller{
 	    	// to bring car parallel to track axis
 	        float steer = (float) (- sensors.getAngleToTrackAxis() / steerLock); 
 	        int gear=-1; // gear R
-	        
+
 	        // if car is pointing in the correct direction revert gear and steer  
 	        if (sensors.getAngleToTrackAxis()*sensors.getTrackPosition()>0)
 	        {
 	            gear = 1;
 	            steer = -steer;
 	        }
-	        clutch = clutching(sensors, clutch);
 	        // build a CarControl variable and return it
 	        Action action = new Action ();
-	        action.gear = gear;
+//	        action.gear = gear;
 	        action.steering = steer;
-	        action.accelerate = 1.0;
-	        action.brake = 0;
-	        action.clutch = clutch;
+	        action.accelerate = -1;
+	        action.brake = 1;
 //			System.out.println(actionsToString(action));
 			try {
 				output.append(actionsToString(action));
@@ -209,7 +173,7 @@ public class SimpleDriver extends Controller{
 	    	// compute accel/brake command
 	        float accel_and_brake = getAccel(sensors);
 	        // compute gear 
-	        int gear = getGear(sensors);
+//	        int gear = getGear(sensors);
 	        // compute steering
 	        float steer = getSteer(sensors);
 	        
@@ -231,18 +195,18 @@ public class SimpleDriver extends Controller{
 	        {
 	            accel = 0;
 	            // apply ABS to brake
-	            brake = filterABS(sensors,-accel_and_brake);
+	            brake = accel_and_brake;
 	        }
 	        
-	        clutch = clutching(sensors, clutch);
+//	        clutch = clutching(sensors, clutch);
 	        
 	        // build a CarControl variable and return it
 	        Action action = new Action ();
-	        action.gear = gear;
+//	        action.gear = gear;
 	        action.steering = steer;
 	        action.accelerate = accel;
 	        action.brake = brake;
-	        action.clutch = clutch;
+//	        action.clutch = clutch;
 //			System.out.println(actionsToString(action));
 			try {
 				output.append(actionsToString(action));
@@ -280,44 +244,7 @@ public class SimpleDriver extends Controller{
 	    	return brake;
 	}
 	
-	float clutching(SensorModel sensors, float clutch)
-	{
-	  	 
-	  float maxClutch = clutchMax;
 
-	  // Check if the current situation is the race start
-	  if (sensors.getCurrentLapTime()<clutchDeltaTime  && getStage()==Stage.RACE && sensors.getDistanceRaced()<clutchDeltaRaced)
-	    clutch = maxClutch;
-
-	  // Adjust the current value of the clutch
-	  if(clutch > 0)
-	  {
-	    double delta = clutchDelta;
-	    if (sensors.getGear() < 2)
-		{
-	      // Apply a stronger clutch output when the gear is one and the race is just started
-		  delta /= 2;
-	      maxClutch *= clutchMaxModifier;
-	      if (sensors.getCurrentLapTime() < clutchMaxTime)
-	        clutch = maxClutch;
-		}
-
-	    // check clutch is not bigger than maximum values
-		clutch = Math.min(maxClutch,clutch);
-
-		// if clutch is not at max value decrease it quite quickly
-		if (clutch!=maxClutch)
-		{
-		  clutch -= delta;
-		  clutch = Math.max((float) 0.0,clutch);
-		}
-		// if clutch is at max value decrease it very slowly
-		else
-			clutch -= clutchDec;
-	  }
-	  return clutch;
-	}
-	
 	public float[] initAngles()	{
 		
 		float[] angles = new float[19];
@@ -344,11 +271,9 @@ public class SimpleDriver extends Controller{
 		sensorString += ",";
 		sensorString += sensors.getAngleToTrackAxis();
 		sensorString += ",";
-		sensorString += sensors.getTrackEdgeSensors()[10];
+		sensorString += Arrays.toString(sensors.getTrackEdgeSensors());
 		sensorString += ",";
-		sensorString += sensors.getTrackEdgeSensors()[9];
-		sensorString += ",";
-		sensorString += sensors.getTrackEdgeSensors()[8];
+		sensorString += Arrays.toString(sensors.getFocusSensors());
 		sensorString += ",";
 		sensorString += sensors.getTrackPosition();
 		sensorString += ",";
@@ -366,6 +291,8 @@ public class SimpleDriver extends Controller{
 		actionString += action.steering;
 		actionString += ",";
 		actionString += action.clutch;
+		actionString += ",";
+		actionString += action.focus;
 		actionString += ",";
 		actionString += action.gear;
 		actionString += "\n";
