@@ -1,9 +1,11 @@
 package champ2010client;
 
-import java.io.*;
-import java.util.Arrays;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 
-public class SimpleDriver extends Controller{
+public class GeneDriver extends Controller{
 
 	//universal constants
 	final float sin5 = (float) 0.08716;
@@ -17,52 +19,40 @@ public class SimpleDriver extends Controller{
 
 	//Gene Values;
 	/* Gear Changing Constants*/
-	final int[]  gearUp={5000,6000,6000,6500,7000,0};
-	final int[]  gearDown={0,2500,3000,3000,3500,3500};
+	private int[]  gearUp={5000,6000,6000,6500,7000,0};
+	private int[]  gearDown={0,2500,3000,3000,3500,3500};
 
 	/* Stuck constants*/
-	final int  stuckTime = 25;
-	final float  stuckAngle = (float) 0.523598775; //PI/6
+	private int  stuckTime = 25;
+	private float  stuckAngle = (float) 0.523598775; //PI/6
 
 	/* Accel and Brake Constants*/
-	final float maxSpeedDist=10;
-	final float maxSpeed=40;
+	private float maxSpeedDist=110;
+	private float maxSpeed=250;
 
 	/* Steering constants*/
-	final float steerLock=(float) 0.785398;
-	final float steerSensitivityOffset=(float) 80.0;
-	final float wheelSensitivityCoeff=1;
+	private float steerLock=(float) 0.785398;
+	private float steerSensitivityOffset=(float) 80.0;
+	private float wheelSensitivityCoeff=1;
 
 	/* ABS Filter Constants */
-	final float wheelRadius[]={(float) 0.3179,(float) 0.3179,(float) 0.3276,(float) 0.3276};
-	final float absSlip=(float) 2.0;
-	final float absRange=(float) 3.0;
-	final float absMinSpeed=(float) 3.0;
-	
+	private float wheelRadius[]={(float) 0.3179,(float) 0.3179,(float) 0.3276,(float) 0.3276};
+	private float absSlip=(float) 2.0;
+	private float absRange=(float) 3.0;
+	private float absMinSpeed=(float) 3.0;
+
 	/* Clutching Constants */
-	final float clutchMax=(float) 0.5;
-	final float clutchDelta=(float) 0.05;
-	final float clutchRange=(float) 0.82;
-	final float	clutchDeltaTime=(float) 0.02;
-	final float clutchDeltaRaced=10;
-	final float clutchDec=(float) 0.01;
-	final float clutchMaxModifier=(float) 1.3;
-	final float clutchMaxTime=(float) 1.5;
+	private float clutchMax=(float) 0.5;
+	private float clutchDelta=(float) 0.05;
+	private float clutchRange=(float) 0.82;
+	private float	clutchDeltaTime=(float) 0.02;
+	private float clutchDeltaRaced=10;
+	private float clutchDec=(float) 0.01;
+	private float clutchMaxModifier=(float) 1.3;
+	private float clutchMaxTime=(float) 1.5;
 
-
-
-	private Writer output;
-	private Writer input;
-
-	public SimpleDriver(){
+	public GeneDriver(){
 		System.out.println("driver started");
-		try {
-			output = new BufferedWriter(new FileWriter("output.txt", true));
-			input = new BufferedWriter(new FileWriter("input.txt", true));
-		}catch ( IOException e){
-
-		}
-
 	}
 
 	public void reset() {
@@ -71,11 +61,7 @@ public class SimpleDriver extends Controller{
 	}
 
 	public void shutdown() {
-		try {
-			output.close();
-			input.close();
-		}catch (IOException e){}
-		System.out.println("Bye bye!");		
+		System.out.println("Bye bye!");
 	}
 	
 		private int getGear(SensorModel sensors){
@@ -202,11 +188,6 @@ public class SimpleDriver extends Controller{
 	        action.accelerate = 1.0;
 	        action.brake = 0;
 	        action.clutch = clutch;
-//			System.out.println(actionsToString(action));
-			try {
-				output.append(actionsToString(action));
-				input.append(sensorsToString(sensors));
-			}catch (IOException e){}
 			return action;
 	    }
 
@@ -249,11 +230,6 @@ public class SimpleDriver extends Controller{
 	        action.accelerate = accel;
 	        action.brake = brake;
 	        action.clutch = clutch;
-//			System.out.println(actionsToString(action));
-			try {
-				output.append(actionsToString(action));
-				input.append(sensorsToString(sensors));
-			}catch (IOException e){}
 			return action;
 	    }
 	}
